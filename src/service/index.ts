@@ -1,17 +1,9 @@
+import { google } from "googleapis";
+import nodemailer from "nodemailer";
 
-
-import {google } from 'googleapis'
-import nodemailer from 'nodemailer'
-import fs from 'fs'
-
-// const { google } = require("googleapis");
-// const fs = require("fs");
-// const nodemailer = require("nodemailer");
-
-const SERVICE_ACCOUNT_EMAIL =
-  "duyserviceaccountcalendar@gg-calendar-ruby.iam.gserviceaccount.com";
+// const SERVICE_ACCOUNT_EMAIL =
+//   "duyserviceaccountcalendar@gg-calendar-ruby.iam.gserviceaccount.com";
 const SERVICE_ACCOUNT_FILE = "src/config/gg-calendar-ruby-service-account.json";
-const CALENDAR_ID = "duy@coderpush.com";
 
 // Set up email delivery method
 const transporter = nodemailer.createTransport({
@@ -22,11 +14,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Send the email
-function sendEmail(subject: string, body: string) {
+function sendEmail({
+  subject,
+  body,
+  receiverEmail,
+}: {
+  subject: string;
+  body: string;
+  receiverEmail: string;
+}) {
   const mailOptions = {
     from: "txd22081999@gmail.com",
-    to: "duy@coderpush.com",
+    to: receiverEmail,
     subject: subject,
     text: body,
   };
@@ -40,7 +39,7 @@ function sendEmail(subject: string, body: string) {
   });
 }
 
-async function initializeCalendarService() {
+async function initializeCalendarService(receiverEmail: string) {
   const auth = new google.auth.GoogleAuth({
     keyFile: SERVICE_ACCOUNT_FILE,
     scopes: ["https://www.googleapis.com/auth/calendar"],
@@ -49,8 +48,9 @@ async function initializeCalendarService() {
   const calendar = google.calendar({ version: "v3", auth });
 
   try {
+    const calendarId = receiverEmail;
     const response = await calendar.events.list({
-      calendarId: CALENDAR_ID,
+      calendarId: calendarId,
       timeMin: new Date(2023, 0, 1).toISOString(),
       singleEvents: true,
       orderBy: "startTime",
@@ -60,12 +60,11 @@ async function initializeCalendarService() {
     if (events.length === 0) {
       console.log("No events found.");
     } else {
-      console.log(`Events for calendar ${CALENDAR_ID} from 2023 onwards:`);
+      console.log(`Events for calendar ${calendarId} from 2023 onwards:`);
       events.forEach((event) => {
-        const startDate = new Date(event.start?.dateTime || event.start?.date || '');
-        if (startDate >= new Date(2023, 0, 1)) {
-          console.log(`- ${event.summary} at ${startDate}`);
-        }
+        const startDate = new Date(
+          event.start?.dateTime || event.start?.date || ""
+        );
       });
     }
     return events;
@@ -75,83 +74,7 @@ async function initializeCalendarService() {
   }
 }
 
-async function authorizeAndLoadClient() {
-  try {
-    const calendar = await initializeCalendarService();
-    return calendar;
-  } catch (error) {
-    console.error("Authorization failed:", (error as any).message);
-  }
-}
-
-// function formatEmailBody(paragraph) {
-//   const lines = paragraph.split("\n");
-//   const formattedBody = lines.join("\n\n");
-//   return formattedBody;
-// }
-
-// async function handleEvents(service) {
-//   const calendarId = "primary";
-//   const startTime = new Date().toISOString().split("T")[0] + "T00:00:00Z"; // Start of the current day
-//   const endTime =
-//     new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
-//       .toISOString()
-//       .split("T")[0] + "T23:59:59Z"; // End of the current month
-
-//   try {
-//     const response = await service.events.list({
-//       calendarId: calendarId,
-//       timeMin: startTime,
-//       timeMax: endTime,
-//       maxResults: 1000,
-//       singleEvents: true,
-//       orderBy: "startTime",
-//       fields: "items(summary,attendees)", // Request only summary and attendees fields
-//     });
-
-//     const events = response.data.items;
-//     const eventSummary = {};
-
-//     if (events.length === 0) {
-//       console.log("No upcoming events found");
-//       return;
-//     }
-
-//     console.log("Events in the current month:");
-
-//     events.forEach((event) => {
-//       const summary = event.summary;
-//       const attendees = event.attendees || [];
-
-//       if (!eventSummary[summary]) {
-//         eventSummary[summary] = { count: 0, attendees: [] };
-//       }
-
-//       eventSummary[summary].count += 1;
-//       eventSummary[summary].attendees.push(
-//         ...attendees.map((attendee) => attendee.email)
-//       );
-//     });
-
-//     console.log(
-//       "Summary of events in",
-//       new Date().toLocaleString("en-US", { month: "long" }) + ":"
-//     );
-//     formatEventsSummary(eventSummary);
-//   } catch (error) {
-//     console.error("Error fetching events:", error.message);
-//   }
-// }
-
-// function formatEventsSummary(eventSummary) {
-//   Object.keys(eventSummary).forEach((summary) => {
-//     const event = eventSummary[summary];
-//     console.log(`- ${summary} (Count: ${event.count})`);
-//     console.log("Attendees:", event.attendees.join(", "));
-//   });
-// }
-
-function convertToTableSummary(filteredEventsSummaryParam : any) {
+function convertToTableSummary(filteredEventsSummaryParam: any) {
   const coderpusherEmails = [
     "minhhung@coderpush.com",
     "min@coderpush.com",
@@ -215,21 +138,16 @@ function convertToTableSummary(filteredEventsSummaryParam : any) {
     "ruby@coderpush.com",
     "si@coderpush.com",
   ];
-
   const managerEmail = ["thien.kieu@coderpush.com", "leo@coderpush.com"];
-
   const eventsWithManagersParticipants = [];
-
   const filteredEventsSummary = filteredEventsSummaryParam;
 
-  for (const [eventName, eventDataArray] of Object.entries(
-    filteredEventsSummary
-  )) {
-    const event_data = (eventDataArray as any)[0];
-    const managers = event_data.attendees.filter((email: string) =>
+  for (const event of filteredEventsSummary) {
+    // const event_data = (eventDataArray as any)[0];
+    const managers = event.attendees.filter((email: string) =>
       managerEmail.includes(email)
     );
-    const participants = event_data.attendees.filter(
+    const participants = event.attendees.filter(
       (email: string) => !managerEmail.includes(email)
     );
 
@@ -240,41 +158,35 @@ function convertToTableSummary(filteredEventsSummaryParam : any) {
     eventsWithManagersParticipants.push(eventObject);
   }
 
-  const participantsGroupedByManager : any = {};
+  const uniqueCombinations = new Map<string, boolean>();
 
-  eventsWithManagersParticipants.forEach((event) => {
-    const { manager, participants } = event;
-    if (!participantsGroupedByManager.manager) {
-      participantsGroupedByManager.manager = [];
-    }
-    participantsGroupedByManager.manager =
-      participantsGroupedByManager.manager.concat(participants);
-  });
+  // Filter out objects with duplicate combinations
+  const uniqueEventsWithManagersParticipants =
+    eventsWithManagersParticipants.filter((obj) => {
+      const key = `${obj.manager}-${obj.participants.join(",")}`;
 
-  const managerEmployeeObjects = [];
+      if (!uniqueCombinations.has(key)) {
+        uniqueCombinations.set(key, true);
+        return true;
+      }
+      return false;
+    });
 
-  for (const [manager, participants] of Object.entries(
-    participantsGroupedByManager
-  )) {
-    const managerEmployeeObject = { manager: manager, scheduled: participants };
-    managerEmployeeObjects.push(managerEmployeeObject);
-  }
+  const managerScheduledObjectsWithUnscheduled: any[] = [];
 
-  const managerScheduledObjectsWithUnscheduled = [];
-
-  for (const [manager, participants] of Object.entries(
-    participantsGroupedByManager
-  )) {
+  uniqueEventsWithManagersParticipants.forEach((group) => {
     const unscheduledEmails = coderpusherEmails.filter(
-      (email) => !(participants as unknown as any).includes(email) && email !== manager
+      (email) =>
+        !(group.participants as unknown as any).includes(email) &&
+        email !== group.manager
     );
     const managerScheduledObject = {
-      manager: manager,
-      scheduled: participants,
+      manager: group.manager,
+      scheduled: group.participants,
       unscheduled: unscheduledEmails,
     };
     managerScheduledObjectsWithUnscheduled.push(managerScheduledObject);
-  }
+  });
 
   return convertToTable(managerScheduledObjectsWithUnscheduled, 120);
 }
@@ -299,7 +211,10 @@ function convertToTable(array: any[], maxWidth: number) {
   );
 
   const totalWidth =
-    Object.values(maxColumnLengths as unknown as any).reduce((acc: any, curr: any) => acc + curr, 0) as number + 10;
+    (Object.values(maxColumnLengths as unknown as any).reduce(
+      (acc: any, curr: any) => acc + curr,
+      0
+    ) as number) + 10;
   const widthRatio = maxWidth / totalWidth;
 
   const columnWidths = Object.fromEntries(
@@ -335,41 +250,42 @@ function convertToTable(array: any[], maxWidth: number) {
   return tableString;
 }
 
-function formatEventsSummary(eventsSummary: any) {
-  const filteredEventsSummary = Object.fromEntries(
-    Object.entries(eventsSummary).filter(
-      ([event_name, info]) => event_name && event_name.includes("1-1")
-    )
+function formatEventsSummary(events: any) {
+  const filteredEventsSummary = events.filter(
+    ({ summary, attendees }: { summary: string; attendees: string[] }) =>
+      summary && summary.includes("1-1")
   );
+
+  const uniqueSummaries = new Map<string, boolean>();
+
+  // Filter out events with duplicate summaries
+  const uniqueEvents = filteredEventsSummary.filter((event: any) => {
+    if (!uniqueSummaries.has(event.summary)) {
+      uniqueSummaries.set(event.summary, true);
+      return true;
+    }
+    return false;
+  });
+
   return convertToTableSummary(filteredEventsSummary);
 }
 
-async function handleEvents() {
+async function handleEvents(receiverEmail: string) {
   try {
-    const events = await initializeCalendarService();
-    const eventsSummary = {} as any; 
-
-    events.forEach((event) => {
-      const summary = event.summary;
-      const attendees = event.attendees || [];
-
-      if (!eventsSummary.summary) {
-        eventsSummary.summary = [];
-      }
-
-      eventsSummary.summary.push({
-        count: 1,
-        attendees: attendees.map((attendee) => attendee.email),
-      });
+    const originalEvents = await initializeCalendarService(receiverEmail);
+    const events = originalEvents.map((event) => {
+      return {
+        ...event,
+        attendees: event.attendees?.map((attendee) => attendee.email),
+      };
     });
-
-    const outputStr = formatEventsSummary(eventsSummary);
-    const subject = "Meeting Summary"
-    sendEmail(subject, outputStr);
+    const outputStr = formatEventsSummary(events);
+    const subject = "Meeting Summary";
+    sendEmail({ subject, body: outputStr, receiverEmail: receiverEmail });
     console.log(outputStr);
   } catch (error) {
     console.error("Error fetching events:", (error as any).message);
   }
 }
 
-module.exports = handleEvents;
+export { handleEvents };
