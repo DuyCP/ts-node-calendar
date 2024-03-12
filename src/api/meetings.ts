@@ -10,8 +10,7 @@ router.get<{}, MeetingResponse>("/", (req, res) => {
 });
 
 router.post<{}, MeetingResponse>("/summary", async (req, res) => {
-  const { text, receiverEmail } = req.body; // Assuming the request body contains a 'text' property
-  console.log("🚀 ~ text:", text);
+  const { receiverEmail } = req.body;
 
   // Assuming MeetingResponse interface has 'success' and 'data' properties
   const response: {
@@ -19,7 +18,7 @@ router.post<{}, MeetingResponse>("/summary", async (req, res) => {
     data: any;
   } = {
     success: true,
-    data: { text, receiverEmail },
+    data: { receiverEmail },
   };
 
   await handleEvents(receiverEmail);
