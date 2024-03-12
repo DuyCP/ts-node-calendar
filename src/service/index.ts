@@ -47,31 +47,26 @@ async function initializeCalendarService(receiverEmail: string) {
 
   const calendar = google.calendar({ version: "v3", auth });
 
-  try {
-    const calendarId = receiverEmail;
-    const response = await calendar.events.list({
-      calendarId: calendarId,
-      timeMin: new Date(2023, 0, 1).toISOString(),
-      singleEvents: true,
-      orderBy: "startTime",
-    });
+  const calendarId = receiverEmail;
+  const response = await calendar.events.list({
+    calendarId: calendarId,
+    timeMin: new Date(2023, 0, 1).toISOString(),
+    singleEvents: true,
+    orderBy: "startTime",
+  });
 
-    const events = response.data.items || [];
-    if (events.length === 0) {
-      console.log("No events found.");
-    } else {
-      console.log(`Events for calendar ${calendarId} from 2023 onwards:`);
-      events.forEach((event) => {
-        const startDate = new Date(
-          event.start?.dateTime || event.start?.date || ""
-        );
-      });
-    }
-    return events;
-  } catch (error) {
-    console.error("Error fetching events:", (error as any).message);
-    return [];
+  const events = response.data.items || [];
+  if (events.length === 0) {
+    console.log("No events found.");
+  } else {
+    console.log(`Events for calendar ${calendarId} from 2023 onwards:`);
+    events.forEach((event) => {
+      const startDate = new Date(
+        event.start?.dateTime || event.start?.date || ""
+      );
+    });
   }
+  return events;
 }
 
 function convertToTableSummary(filteredEventsSummaryParam: any) {
@@ -267,25 +262,23 @@ function formatEventsSummary(events: any) {
     return false;
   });
 
-  return convertToTableSummary(filteredEventsSummary);
+  return convertToTableSummary(uniqueEvents);
+  //   return convertToTableSummary(filteredEventsSummary);
 }
 
 async function handleEvents(receiverEmail: string) {
-  try {
-    const originalEvents = await initializeCalendarService(receiverEmail);
-    const events = originalEvents.map((event) => {
-      return {
-        ...event,
-        attendees: event.attendees?.map((attendee) => attendee.email),
-      };
-    });
-    const outputStr = formatEventsSummary(events);
-    const subject = "Meeting Summary";
-    sendEmail({ subject, body: outputStr, receiverEmail: receiverEmail });
-    console.log(outputStr);
-  } catch (error) {
-    console.error("Error fetching events:", (error as any).message);
-  }
+  const originalEvents = await initializeCalendarService(receiverEmail);
+  const events = originalEvents.map((event) => {
+    return {
+      ...event,
+      attendees: event.attendees?.map((attendee) => attendee.email),
+    };
+  });
+  const outputStr = formatEventsSummary(events);
+  const subject = "Meeting Summary";
+
+  sendEmail({ subject, body: outputStr, receiverEmail: receiverEmail });
+  console.log(outputStr);
 }
 
 export { handleEvents };
