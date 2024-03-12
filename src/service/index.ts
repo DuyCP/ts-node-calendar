@@ -23,6 +23,8 @@ function sendEmail({
   body: string;
   receiverEmail: string;
 }) {
+  console.log("Prepare mailing");
+
   const mailOptions = {
     from: "txd22081999@gmail.com",
     to: receiverEmail,
@@ -37,6 +39,7 @@ function sendEmail({
       console.log("Email sent:", info.response);
     }
   });
+  console.log("Mail sent");
 }
 
 async function initializeCalendarService(receiverEmail: string) {
