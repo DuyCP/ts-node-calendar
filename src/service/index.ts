@@ -24,6 +24,7 @@ async function sendEmail({
       user: "txd22081999@gmail.com", // Replace with your Gmail address
       pass: "kxtu mipe owot gmxb", // Replace with your Gmail password
     },
+    port: 465,
   });
   console.log("Trigger new build");
   console.log("Trigger new build 2");
