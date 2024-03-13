@@ -6,15 +6,8 @@ import nodemailer from "nodemailer";
 const SERVICE_ACCOUNT_FILE = "src/config/gg-calendar-ruby-service-account.json";
 
 // Set up email delivery method
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "txd22081999@gmail.com", // Replace with your Gmail address
-    pass: "kxtu mipe owot gmxb", // Replace with your Gmail password
-  },
-});
 
-function sendEmail({
+async function sendEmail({
   subject,
   body,
   receiverEmail,
@@ -23,7 +16,28 @@ function sendEmail({
   body: string;
   receiverEmail: string;
 }) {
-  console.log("Prepare mailing");
+  console.log("MAILING: Prepare mailing");
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "txd22081999@gmail.com", // Replace with your Gmail address
+      pass: "kxtu mipe owot gmxb", // Replace with your Gmail password
+    },
+  });
+
+  await new Promise((resolve, reject) => {
+    // verify connection configuration
+    transporter.verify(function (error, success) {
+      if (error) {
+        console.log(error);
+        reject(error);
+      } else {
+        console.log("MAILING: Server is ready to take our messages");
+        resolve(success);
+      }
+    });
+  });
 
   const mailOptions = {
     from: "txd22081999@gmail.com",
@@ -32,12 +46,17 @@ function sendEmail({
     text: body,
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error("Error sending email:", error);
-    } else {
-      console.log("Email sent:", info.response);
-    }
+  await new Promise((resolve, reject) => {
+    // send mail
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error(err);
+        reject(err);
+      } else {
+        console.log(info);
+        resolve(info);
+      }
+    });
   });
   console.log("Mail sent");
 }
