@@ -26,6 +26,7 @@ async function sendEmail({
     },
   });
   console.log("Trigger new build");
+  console.log("Trigger new build 2");
 
   await new Promise((resolve, reject) => {
     transporter.verify(function (error, success) {
