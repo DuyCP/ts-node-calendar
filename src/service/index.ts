@@ -25,6 +25,7 @@ async function sendEmail({
       pass: "kxtu mipe owot gmxb", // Replace with your Gmail password
     },
   });
+  console.log("Trigger new build");
 
   await new Promise((resolve, reject) => {
     transporter.verify(function (error, success) {
