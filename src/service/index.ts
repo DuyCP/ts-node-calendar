@@ -25,11 +25,12 @@ async function sendEmail({
       pass: "kxtu mipe owot gmxb", // Replace with your Gmail password
     },
     port: 465,
+    // secure: true,
   });
   console.log("Trigger new build");
   console.log("Trigger new build 2");
 
-  await new Promise((resolve, reject) => {
+  const server = await new Promise((resolve, reject) => {
     transporter.verify(function (error, success) {
       if (error) {
         console.log(error);
@@ -41,6 +42,10 @@ async function sendEmail({
     });
   });
 
+  if (!server) {
+    console.log({ error: "Fail in initializing mailing server" });
+  }
+
   const mailOptions = {
     from: "txd22081999@gmail.com",
     to: receiverEmail,
@@ -48,18 +53,20 @@ async function sendEmail({
     text: body,
   };
 
-  await new Promise((resolve, reject) => {
-    // send mail
-    transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        console.error(err);
-        reject(err);
-      } else {
-        console.log(info);
-        resolve(info);
-      }
-    });
-  });
+  await transporter.sendMail(mailOptions);
+
+  // await new Promise((resolve, reject) => {
+  //   // send mail
+  //   transporter.sendMail(mailOptions, (err, info) => {
+  //     if (err) {
+  //       console.error(err);
+  //       reject(err);
+  //     } else {
+  //       console.log(info);
+  //       resolve(info);
+  //     }
+  //   });
+  // });
   console.log("Mail sent");
 }
 
