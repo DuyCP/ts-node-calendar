@@ -1,0 +1,30 @@
+class MattermostClient
+  include Singleton
+
+  # general APIs
+  EMAIL_API_ENDPOINT = "https://coderpull.com/api/v4/users/email/"
+  POST_API_ENDPOINT = "https://coderpull.com/api/v4/posts"
+
+  def client(endpoint)
+    @_client ||= Faraday.new(endpoint) do |client|
+      client.response :json
+      client.request :authorization, "Bearer", mm_token
+    end
+  end`
+
+  def mm_token
+    Integration.mattermost.first&.secret || raise("Please set up Mattermost integration.") 
+  end
+
+  def create_post(channel_id: , message: )
+    client(POST_API_ENDPOINT).post do |req|
+      req.url "/api/v4/posts"
+      req.headers["Content-Type"] = "application/json"
+      req.headers["Authorization"] = "Bearer #{mm_token}"
+      req.body = {
+        channel_id: channel_id,
+        message: message,
+      }.to_json
+    end
+  end
+end
