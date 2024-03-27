@@ -1,128 +1,18 @@
 import { google } from "googleapis";
-// import nodemailer from "nodemailer";
 import { MattermostService } from "./mattermost";
-// import { Client } from "postmark";
 
 const SERVICE_ACCOUNT_FILE = "src/config/gg-calendar-ruby-service-account.json";
 
 const ACCESS_TOKEN = `fwjost36i3fo8pdfyjyjws51bw`;
-// const EMAIL_API_ENDPOINT = "https://coderpull.com/api/v4/users/email/";
 const service = new MattermostService(ACCESS_TOKEN);
 console.log("Init MM Service");
 
-const runService = async () => {
+const sendMessage = async (channelId: string, message: string) => {
   const client = await service.getClient();
   console.log("🚀 ~ runService ~ client:", client);
-  const channelId = `q8oegpfuxpnr7k8mc4etbben7w`;
-  const message = "Hello";
   await service.createPost(channelId, message);
   console.log("SENT MESSAGE");
 };
-
-runService();
-
-// const SERVICE_ACCOUNT_EMAIL =
-//   "duyserviceaccountcalendar@gg-calendar-ruby.iam.gserviceaccount.com";
-// const POSTMARK_API_KEY = `993b8d80-43a2-49de-8c02-bd782ed8c70f`;
-// const FROM_EMAIL = "txd22081999@gmail.com";
-
-// console.log("POSTMARK Client");
-// const client = new Client(POSTMARK_API_KEY);
-
-// console.log(client);
-
-// Set up email delivery method
-// async function sendEmail({
-//   subject,
-//   body,
-//   receiverEmail,
-// }: {
-//   subject: string;
-//   body: string;
-//   receiverEmail: string;
-// }) {
-//   console.log("MAILING: Prepare mailing");
-
-//   const transporter = nodemailer.createTransport({
-//     service: "gmail",
-//     auth: {
-//       user: "txd22081999@gmail.com", // Replace with your Gmail address
-//       pass: "kxtu mipe owot gmxb", // Replace with your Gmail password
-//     },
-//     port: 465,
-//     // secure: true,
-//   });
-//   console.log("Trigger new build");
-//   console.log("Trigger new build 2");
-
-//   const server = await new Promise((resolve, reject) => {
-//     transporter.verify(function (error, success) {
-//       if (error) {
-//         console.log(error);
-//         reject(error);
-//       } else {
-//         console.log("MAILING: Server is ready to take our messages");
-//         resolve(success);
-//       }
-//     });
-//   });
-
-//   if (!server) {
-//     console.log({ error: "Fail in initializing mailing server" });
-//   }
-
-//   const mailOptions = {
-//     from: "txd22081999@gmail.com",
-//     to: receiverEmail,
-//     subject: subject,
-//     text: body,
-//   };
-
-//   await transporter.sendMail(mailOptions);
-
-//   // await new Promise((resolve, reject) => {
-//   //   // send mail
-//   //   transporter.sendMail(mailOptions, (err, info) => {
-//   //     if (err) {
-//   //       console.error(err);
-//   //       reject(err);
-//   //     } else {
-//   //       console.log(info);
-//   //       resolve(info);
-//   //     }
-//   //   });
-//   // });
-//   console.log("Mail sent");
-// }
-
-// async function sendEmail({
-//   subject,
-//   body,
-//   receiverEmail,
-// }: {
-//   subject: string;
-//   body: string;
-//   receiverEmail: string;
-// }) {
-//   console.log("MAILING: Prepare mailing");
-
-//   await client.sendEmail({
-//     From: FROM_EMAIL,
-//     To: receiverEmail,
-//     Subject: "Test",
-//     TextBody: "Hello from Postmark!",
-//   });
-
-//   console.log("MAIL SENT");
-// }
-
-// setTimeout(() => {
-//   sendEmail({
-//     subject: "",
-//     body: "",
-//     receiverEmail: "txd22081999v2@gmail.com",
-//   });
-// }, 3000);
 
 async function initializeCalendarService(receiverEmail: string) {
   const auth = new google.auth.GoogleAuth({
@@ -348,7 +238,6 @@ function formatEventsSummary(events: any) {
   });
 
   return convertToTableSummary(uniqueEvents);
-  //   return convertToTableSummary(filteredEventsSummary);
 }
 
 async function handleEvents(receiverEmail: string) {
@@ -360,10 +249,11 @@ async function handleEvents(receiverEmail: string) {
     };
   });
   const outputStr = formatEventsSummary(events);
-  const subject = "Meeting Summary";
-
-  // sendEmail({ subject, body: outputStr, receiverEmail: receiverEmail });
+  const channelId = `q8oegpfuxpnr7k8mc4etbben7w`;
+  const message = outputStr;
+  sendMessage(channelId, message);
   console.log(outputStr);
+  return outputStr;
 }
 
 export { handleEvents };
